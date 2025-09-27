@@ -1,63 +1,68 @@
-# DeepCubeA 实现细节
+# DeepCubeA Implementation Details
 
-## 1. 魔方状态表示
+## 1. Rubik’s Cube State Representation
 
-魔方共有54个小面，6种颜色。我们为每个小面分配唯一编号，由其所在大面和在大面上的位置决定。在复原状态下，大面的位置和颜色关系固定为：
+A Rubik’s Cube has 54 stickers in total and 6 colors. Each sticker is assigned a unique index based on the face it belongs to and its position on that face. In the solved state, the face-to-color mapping is fixed as follows:
 
-- U面(上)：白色
-- F面(前)：绿色
-- L面(左)：橙色
-- R面(右)：红色
-- B面(后)：蓝色
-- D面(下)：黄色
+- U (Up): White  
+- F (Front): Green  
+- L (Left): Orange  
+- R (Right): Red  
+- B (Back): Blue  
+- D (Down): Yellow  
 
-我们使用54维向量表示魔方状态，每个元素表示对应小面的颜色。例如，复原状态的向量表示为：
+We represent the cube state as a 54-dimensional vector, where each element corresponds to the color of one sticker. For example, the solved state is represented as:
 
 ```python
-# 用整数表示颜色（0=白, 1=红, 2=绿, 3=黄, 4=橙, 5=蓝）
+# Colors represented by integers (0=white, 1=red, 2=green, 3=yellow, 4=orange, 5=blue)
 initial_state = [
-    0,0,0, 0,0,0, 0,0,0,  # U面
-    1,1,1, 1,1,1, 1,1,1,  # R面
-    2,2,2, 2,2,2, 2,2,2,  # F面
-    3,3,3, 3,3,3, 3,3,3,  # D面
-    4,4,4, 4,4,4, 4,4,4,  # L面
-    5,5,5, 5,5,5, 5,5,5   # B面
+    0,0,0, 0,0,0, 0,0,0,  # U face
+    1,1,1, 1,1,1, 1,1,1,  # R face
+    2,2,2, 2,2,2, 2,2,2,  # F face
+    3,3,3, 3,3,3, 3,3,3,  # D face
+    4,4,4, 4,4,4, 4,4,4,  # L face
+    5,5,5, 5,5,5, 5,5,5   # B face
 ]
 ```
 
-输入DNN模型时，状态向量会转换为54×6的one-hot编码。
+When input to the DNN model, the state vector is converted into a 54×6 one-hot encoding.
 
-## 2. 动作表示
+## 2. Action Representation
 
-使用面表示法（face notation）表示魔方旋转动作：
+We use standard face notation to represent cube rotations:
 
-- F、B、L、R、U、D：分别表示旋转前、后、左、右、上、下六个面
-- 单个字母表示顺时针旋转90°，字母后加撇号(')表示逆时针旋转90°
+* F, B, L, R, U, D: Rotate the Front, Back, Left, Right, Up, and Down faces.
+* A single letter means a clockwise 90° rotation, while an apostrophe (') indicates a counterclockwise 90° rotation.
 
-例如：
-- R：右面顺时针旋转90°
-- R'：右面逆时针旋转90°
+Examples:
 
-## 3. 深度近似值迭代（Deep Approximate Value Iteration）
+* `R`: Rotate the right face clockwise by 90°.
+* `R'`: Rotate the right face counterclockwise by 90°.
 
-我们使用DNN网络近似表示状态到目标状态的距离（cost-to-go）J(s)。训练采用逐步训练的方式，模拟值迭代过程：
+## 3. Deep Approximate Value Iteration (DAVI)
 
-1. 在第K次训练时，我们从原始魔方状态随机打乱1-K次生成训练样本
-2. 利用已训练好的第K-1次模型J_{θ_{K-1}}提供监督信号
-3. 通过公式J_{θ_K}(s) = min_a [J_{θ_{K-1}}(A(s,a)) + 1]更新当前模型
+We use a DNN to approximate the distance (cost-to-go) $J(s)$ from a state $s$ to the solved state. Training follows a stepwise approach that simulates value iteration:
 
-## 4. 训练伪代码
+1. At step $K$, generate training samples by scrambling the solved cube with 1–K random moves.
+2. Use the previously trained model $J_{\theta_{K-1}}$ as supervision.
+3. Update using:
+
+$$
+J_{\theta_K}(s) = \min_a \big[ J_{\theta_{K-1}}(A(s,a)) + 1 \big]
+$$
+
+## 4. Training Pseudocode
 
 ```python
 # Algorithm 1: DAVI
-# 输入:
-#   B: 批次大小
-#   K: 最大打乱次数
-#   M: 训练迭代次数
-#   C: 收敛检查频率
-#   ε: 误差阈值
-# 输出:
-#   θ: 训练好的神经网络参数
+# Input:
+#   B: batch size
+#   K: maximum scramble depth
+#   M: number of training iterations
+#   C: convergence check frequency
+#   ε: error threshold
+# Output:
+#   θ: trained neural network parameters
 
 theta = initialize_parameters()
 theta_e = theta
@@ -70,60 +75,53 @@ for m in 1 to M:
     if (m mod C == 0) and (loss < ε):
         theta_e = theta
 
-eturn theta
+return theta
 ```
 
-## 5. 推理：BWAS搜索算法
+## 5. Inference: BWAS Search Algorithm
 
-使用A*搜索算法，维护两个状态集合OPEN和CLOSED：
+We use an A* search variant that maintains two sets of states:
 
-- OPEN：待扩展状态
-- CLOSED：已扩展状态
+* **OPEN**: states pending expansion
+* **CLOSED**: states already expanded
 
-路径长度计算公式：f(x) = λ*g(x) + h(x)
+Path length formula:
 
-- h(x)：启发函数，用训练好的DNN模型J_θ表示
-- g(x)：初始状态到状态x的实际路径长度
-- λ：权重参数，原文中设置为0.6
+$$
+f(x) = \lambda \cdot g(x) + h(x)
+$$
 
-每次从OPEN集合中选择路径最短的N个状态（原文中N=10000）加入CLOSED集合，并扩展其邻居状态。
+* $h(x)$: heuristic, predicted by the trained DNN $J_\theta$
+* $g(x)$: actual path length from the initial state to state $x$
+* $\lambda$: weighting parameter, set to 0.6 in the paper
 
-## 6. 神经网络架构与实现细节
+At each step, select the N shortest paths from OPEN (N=10000 in the paper), move them to CLOSED, and expand their neighbors.
 
-### 模型架构
+## 6. Neural Network Architecture and Implementation Details
 
-1. **隐藏层**：前两个隐藏层大小分别为5000和1000，全连接
-2. **残差块**：4个残差块，每个包含两个大小为1000的隐藏层
-3. **输出层**：单个线性单元，表示cost-to-go估计
-4. **归一化和激活**：所有隐藏层使用批归一化和ReLU激活函数
+### Model Architecture
 
-### 训练细节
+1. **Hidden Layers**: Two fully connected hidden layers of sizes 5000 and 1000.
+2. **Residual Blocks**: 4 residual blocks, each containing two hidden layers of size 1000.
+3. **Output Layer**: A single linear unit predicting the cost-to-go.
+4. **Normalization & Activation**: Batch normalization and ReLU applied to all hidden layers.
 
-1. **批次大小**：10,000
-2. **优化器**：ADAM
-3. **正则化**：无
-4. **最大打乱次数(K)**：30
-5. **误差阈值(ε)**：0.20（模型无法收敛到原文中的0.05）
-6. **收敛检查**：每5,000次迭代检查一次
-7. **每epoch迭代次数**：1000次
-8. **训练时间**：约12小时
-9. **设备**：单个 NVIDIA A100
-10. **显存需求**：约 4GB
+### Training Details
 
+1. **Batch size**: 10,000
+2. **Optimizer**: ADAM
+3. **Regularization**: None
+4. **Maximum scramble depth (K)**: 30
+5. **Error threshold (ε)**: 0.20 (our model can't reach threshod 0.05 which adopted in the original paper)
+6. **Convergence check**: Every 5,000 iterations
+7. **Iterations per epoch**: 1000
+8. **Training time**: ~12 hours
+9. **Hardware**: Single NVIDIA A100 GPU
+10. **VRAM usage**: ~4GB
 
-## 7. 网页源代码获取
+## 7. Downloading Web Source Code
 
-使用谷歌浏览器的插件：Resources Saver.
+We used the Google Chrome extension **Resources Saver**.
 
 ![web](assets/download.png)
-
-
-## Debug
-
-1. DNN中的所乘的 K 可以去掉，让模型直接输出cost-to-go估计值即可。
-2. 还是用MSE_LOSS感觉比较好一点，先别用relative了感觉❌。还是要用relative，因为如果不用，K=2的时候模型收敛位置的损失就高达0.15，收敛判别的依据感觉并不准确。❌ 最终没有用relative_mse_loss，只用的mse_loss，relative会加剧模型过拟合到K比较小的情况，让模型在K比较大的时候也非常容易收敛，但这并不是我们想要的，我们需要模型更多的去学习K较大的状态。
-3. 不要在dataset中一个数据一个数据放到torch上，这样效率太低，最好还是在training_loop中成批量一起转移。
-4. 有一个问题，如果说model_theta_e遇到一个自己没见过的状态，实际上的距离是K+1，但是它给出来了一个小于K的值，然后这个时候模型就会低估当前这个状态的距离？在实际的训练结果中，模型的输出确实也相对比较低，比如30次打乱给出的最高分才是12multiple，这种低估不知道是否有问题。
-5. 还是因为粗心Cube的旋转操作出错了。
-6. 模型的收敛速度特别慢，当K=14时收敛（损失小于0.05）需要30多个epoch，当K值更大（超过20）时或许收敛速度会更快，但考虑到计算资源有限，在K>14不再遵循阈值，而是最大epoch（20个）进行训练，最终也能训练出来功能较为合理的模型。
 
