@@ -61,7 +61,7 @@ pip install -r requirements.txt
 
 Download the pretrained [final_model_K_30.pth](https://drive.google.com/file/d/1jdmdoXkkJb7sNq6oy-iudtnVIgQXDsLl/view?usp=drive_link) model and place it in the `checkpoint` folder. Then Update `model_path` in `config.py` to `checkpoint/final_model_K_30.pth`.
 
-#### 1. Web Application
+#### Web Application
 
 Run `app.py` to launch the web app:
 
@@ -71,7 +71,7 @@ python app.py
 
 Open `http://localhost:5000` in your browser to access the application.
 
-#### 2. Inference
+#### Inference
 
 Randomly scramble and solve:
 
