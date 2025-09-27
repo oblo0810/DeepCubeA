@@ -15,8 +15,17 @@
 </a>
 </p>
 
+This project is a reimplementation of [DeepCubeA](https://cse.sc.edu/~foresta/assets/files/SolvingTheRubiksCubeWithDeepReinforcementLearningAndSearch_Final.pdf), which combines deep reinforcement learning and search algorithms to solve the Rubik’s Cube. The original paper demonstrates how neural networks and search techniques can be used to effectively solve complex combinatorial optimization problems such as the Rubik’s Cube.
 
-This project is a reimplementation of [DeepCubeA](https://cse.sc.edu/~foresta/assets/files/SolvingTheRubiksCubeWithDeepReinforcementLearningAndSearch_Final.pdf). Training is based on the PyTorch Lightning framework. The method combines deep reinforcement learning and search algorithms to solve the Rubik’s Cube. The original paper demonstrates how neural networks and search techniques can be combined to solve complex combinatorial optimization problems such as the Rubik’s Cube.
+## Original paper: Solving the Rubik’s cube with deep reinforcement learning and search
+
+Abstrack: The Rubik’s cube is a prototypical combinatorial puzzle that has a large state space with a single goal state. The goal state is unlikely to be accessed using sequences of randomly generated moves, posing unique challenges for machine learning. We solve the Rubik’s cube with DeepCubeA, a deep reinforcement learning approach that learns how to solve increasingly difficult states in reverse from the goal state without any specific domain knowledge. DeepCubeA solves 100% of all test configurations, finding a shortest path to the goal state 60.3% of the time. DeepCubeA generalizes to other combinatorial puzzles and is able to solve the 15 puzzle, 24 puzzle, 35 puzzle, 48 puzzle, Lights Out and Sokoban, finding a shortest path in the majority of verifiable cases.
+<p align="center">
+<img src="assets/paper.png" width="800" />
+</p>
+
+
+
 
 ## Table of Contents
 
