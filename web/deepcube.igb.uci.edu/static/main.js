@@ -14,12 +14,12 @@ var solution_text = null;
 // var faceNames = ["top", "bottom", "left", "right", "back", "front"];
 var faceNames = ["top", "right", "front", "bottom", "left", "back"];
 var colorMap = {
-    0: "#ffffff",  // 白色
-    1: "#ff0000",  // 红色
-    2: "#00cc00",  // 绿色
-    3: "#ffff00",  // 黄色
-    4: "#ff9900",  // 橙色
-    5: "#0000ff"   // 蓝色
+	0: "#ffffff",  // White
+	1: "#ff0000",  // Red
+	2: "#00cc00",  // Green
+	3: "#ffff00",  // Yellow
+	4: "#ff9900",  // Orange
+	5: "#0000ff"   // Blue
 };
 var lastMouseX = 0,
   lastMouseY = 0;
@@ -37,7 +37,7 @@ var initState = [
     5, 5, 5, 5, 5, 5, 5, 5, 5
 ];
 
-// 定义 idx 对换映射表
+// Define index swap mapping table
 const idxSwapMap = {
     6: 0,
     0: 6,
@@ -95,7 +95,7 @@ function restoreCube() {
 //         for (j = 0; j < 9; j++) {
 //             var iDiv = document.createElement('div');
 //             iDiv.className = 'sticker';
-//             // 修正颜色索引获取方式
+//             // Fix color index access
 //             iDiv.style["background-color"] = colorMap[newState[idx]]
 //             document.getElementById(faceNames[i]).appendChild(iDiv);
 //             idx = idx + 1
@@ -114,15 +114,15 @@ function setStickerColors(newState) {
 
 			swaped_idx = mapIndex(idx)
 
-            // 设置颜色
+			// Set color
             iDiv.style["background-color"] = colorMap[newState[swaped_idx]];
 
-            // 在 sticker 上显示数字（idx）
-            iDiv.textContent = swaped_idx;  // 显示在小方块里面
-            iDiv.style.color = "black"; // 文字颜色
-            iDiv.style.fontSize = "14px"; // 字体大小
-            iDiv.style.textAlign = "center"; // 居中
-            iDiv.style.lineHeight = "33.3%"; // 垂直居中
+			// Show number (index) on the sticker
+			iDiv.textContent = swaped_idx;  // Display inside the cubelet
+			iDiv.style.color = "black"; // Text color
+			iDiv.style.fontSize = "14px"; // Font size
+			iDiv.style.textAlign = "center"; // Center horizontally
+			iDiv.style.lineHeight = "33.3%"; // Center vertically
 
             document.getElementById(faceNames[i]).appendChild(iDiv);
 
@@ -222,7 +222,7 @@ function nextState(moveTimeout=0) {
 		disableScroll();
 		move = moves.shift() // get Move
 
-		// 添加安全检查
+		// Add safety check
         if (!rotateIdxs_new || !rotateIdxs_new[move]) {
             console.error('Invalid move or rotateIdxs_new not initialized:', move);
             enableInput();
@@ -294,11 +294,11 @@ function solveCube() {
         // timeout: 5000,
         success: function(response) {
             if (response.error) {
-                // 处理业务逻辑错误
+				// Handle business logic errors
                 document.getElementById("solution_text").innerHTML = "Error: " + response.error;
                 enableInput();
             } else {
-                // 正常处理成功响应
+				// Handle successful response
                 solveStartState = JSON.parse(JSON.stringify(state))
                 solveMoves = response["moves"];
                 solveMoves_rev = response["moves_rev"];
@@ -312,7 +312,7 @@ function solveCube() {
             }
         },
         error: function(xhr, status, error) {
-            // 处理HTTP请求错误
+			// Handle HTTP request errors
             console.log("AJAX Error:", status, error);
             var errorMessage = "请求失败，请重试";
             if (status === "timeout") {

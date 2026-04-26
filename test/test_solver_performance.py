@@ -10,19 +10,20 @@ import random
 
 from solver_utils import *
 
-# 设置随机种子以确保可重复性
+# Set random seed for reproducibility
 np.random.seed(42)
 random.seed(42)
 
+
 def generate_random_state(cube, min_scrambles=1000, max_scrambles=10000):
     """
-    生成随机打乱的魔方状态
-    参数:
-        cube: Cube对象
-        min_scrambles: 最小打乱次数
-        max_scrambles: 最大打乱次数
-    返回:
-        随机打乱后的魔方状态
+    Generate a randomly scrambled cube state.
+    Args:
+        cube: Cube object.
+        min_scrambles: Minimum number of scrambles.
+        max_scrambles: Maximum number of scrambles.
+    Returns:
+        Randomly scrambled cube state.
     """
     state = TARGET_STATE.copy()
     num_scrambles = random.randint(min_scrambles, max_scrambles)
@@ -38,11 +39,11 @@ def generate_random_state(cube, min_scrambles=1000, max_scrambles=10000):
 def main():
     config = Config()
     args = config.parse_args()
-    # 配置
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # Configuration
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"使用设备: {device}")
 
-    # 加载模型
+    # Load model
     model_path = args.model_path
     if not os.path.exists(model_path):
         print(f"错误: 未找到模型文件 {model_path}")
@@ -50,10 +51,10 @@ def main():
 
     model = load_model(model_path, device)
 
-    # 创建Cube对象
+    # Create Cube object
     cube = Cube()
 
-    # 生成测试集
+    # Generate test set
     num_tests = 200
     min_scrambles = 1000
     max_scrambles = 10000
@@ -66,16 +67,16 @@ def main():
     print(f"开始生成 {num_tests} 个随机魔方状态并求解...")
 
     for i in range(num_tests):
-        # 生成随机状态
+        # Generate random state
         state, num_scrambles = generate_random_state(cube, min_scrambles, max_scrambles)
         scramble_counts.append(num_scrambles)
 
-        # 求解魔方
+        # Solve cube
         start_time = time.time()
         action_path, _ = a_star_search(state, model, cube)
         end_time = time.time()
 
-        # 记录结果
+        # Record results
         solve_time = end_time - start_time
 
         if action_path is not None:
@@ -83,23 +84,31 @@ def main():
             total_solve_length += solve_length
             total_time += solve_time
             solved_count += 1
-            print(f"测试 {i+1}/{num_tests}: 打乱次数={num_scrambles}, 解长度={solve_length}, 耗时={solve_time:.2f}秒")
+            print(
+                f"测试 {i + 1}/{num_tests}: 打乱次数={num_scrambles}, 解长度={solve_length}, 耗时={solve_time:.2f}秒"
+            )
         else:
-            print(f"测试 {i+1}/{num_tests}: 打乱次数={num_scrambles}, 求解失败, 耗时={solve_time:.2f}秒")
+            print(
+                f"测试 {i + 1}/{num_tests}: 打乱次数={num_scrambles}, 求解失败, 耗时={solve_time:.2f}秒"
+            )
 
-        # 每完成10个测试，打印当前平均结果
+        # Print running average after every 10 tests
         if (i + 1) % 10 == 0:
-            current_avg_length = total_solve_length / solved_count if solved_count > 0 else 0
+            current_avg_length = (
+                total_solve_length / solved_count if solved_count > 0 else 0
+            )
             current_avg_time = total_time / solved_count if solved_count > 0 else 0
-            print(f"进度: {i+1}/{num_tests}, 当前平均解长度: {current_avg_length:.2f}, 当前平均耗时: {current_avg_time:.2f}秒")
+            print(
+                f"进度: {i + 1}/{num_tests}, 当前平均解长度: {current_avg_length:.2f}, 当前平均耗时: {current_avg_time:.2f}秒"
+            )
 
-    # 计算最终统计结果
+    # Compute final statistics
     avg_scrambles = sum(scramble_counts) / num_tests
     avg_solve_length = total_solve_length / solved_count if solved_count > 0 else 0
     avg_solve_time = total_time / solved_count if solved_count > 0 else 0
     success_rate = solved_count / num_tests * 100
 
-    # 输出结果
+    # Output results
     print("\n===== 测试结果 =====")
     print(f"总测试数: {num_tests}")
     print(f"成功求解数: {solved_count}")
@@ -110,5 +119,5 @@ def main():
     print("====================")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,16 +1,17 @@
 # rubiks_color_change.py
-# 运行: python rubiks_color_change.py
-# 会生成 rubiks_color_change.html
+# Run: python rubiks_color_change.py
+# Generates rubiks_color_change.html
 
 import json
 import model.Cube as Cube
 
+
 def generate_rubiks_html(initial_state, indince, moves, output_file="rubiks_move.html"):
     """
-    initial_state: dict, {face_name: [9个颜色字符串]}
+    initial_state: dict, {face_name: [9 color strings]}
         face_name: U, D, F, B, L, R
-        颜色字符串可用 "white","yellow","red","orange","blue","green"
-    moves: list, 每步是一个新的状态 (即9个颜色变化后的完整魔方)
+        Supported color strings: "white","yellow","red","orange","blue","green"
+    moves: list, each step is a new state (a complete cube state after color updates)
     """
 
     html_template = f"""
@@ -357,7 +358,7 @@ const moves = {json.dumps(moves)};
 const orders = {json.dumps(indince)};
 
 let scene, camera, renderer, controls;
-let stickers = {{}}; // 保存每个小贴片的Mesh
+let stickers = {{}}; // Store mesh for each sticker
 
 init();
 animate();
@@ -372,7 +373,7 @@ function init() {{
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 轨道控制器
+    // Orbit controls
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
     controls.enableDamping = true;
@@ -381,20 +382,20 @@ function init() {{
     controls.maxDistance = 20;
     controls.update();
 
-    // 灯光
+    // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
-    // 创建魔方
+    // Create cube
     createCube(initialState, orders);
 
-    // 窗口自适应
+    // Responsive resize
     window.addEventListener('resize', onWindowResize, false);
 
-    // 播放颜色变化
+    // Play color transitions
     playMoves(moves, 1600);
 }}
 function makeNumberTexture(number, size = 128) {{
@@ -403,19 +404,19 @@ function makeNumberTexture(number, size = 128) {{
     canvas.height = size;
     const ctx = canvas.getContext('2d');
 
-    // 背景透明
+    // Transparent background
     ctx.clearRect(0, 0, size, size);
 
-    // 字体样式
+    // Font style
     ctx.fillStyle = 'black';
     ctx.font = `${{size * 0.7}}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // 画数字
+    // Draw number
     ctx.fillText(number.toString(), size / 2, size / 2);
 
-    // 创建纹理
+    // Create texture
     const texture = new THREE.CanvasTexture(canvas);
     texture.needsUpdate = true;
     return texture;
@@ -426,7 +427,7 @@ function createCube(state, orders) {{
     const gap = 0.05;
     const offset = (stickerSize + gap);
 
-    // 每个面的方向和偏移
+    // Direction and offset for each face
     const faceConfig = {{
         U: {{ normal: [0, 1, 0], base: [0, 1.5, 0], udir: [1, 0, 0], vdir: [0, 0, -1] }},
         D: {{ normal: [0, -1, 0], base: [0, -1.5, 0], udir: [1, 0, 0], vdir: [0, 0, 1] }},
@@ -450,33 +451,33 @@ function createCube(state, orders) {{
         let py = cfg.base[1] + cfg.udir[1] * centerOffsetU + cfg.vdir[1] * centerOffsetV;
         let pz = cfg.base[2] + cfg.udir[2] * centerOffsetU + cfg.vdir[2] * centerOffsetV;
 
-        // 颜色贴图
+        // Color material
         let colorMaterial = new THREE.MeshLambertMaterial({{ color: colors[i] }});
 
-        // 数字贴图
+        // Number texture
         let numberTexture = makeNumberTexture(numbers[i]);
         let numberMaterial = new THREE.MeshBasicMaterial({{ map: numberTexture, transparent: true }});
 
-        // 创建面片（贴纸）
+        // Create sticker plane
         let geometry = new THREE.PlaneGeometry(stickerSize, stickerSize);
 
-        // 创建颜色面
+        // Create color plane
         let sticker = new THREE.Mesh(geometry, colorMaterial);
 
-        // 创建数字面，稍微抬高避免 z-fighting
+        // Create number plane, slightly raised to avoid z-fighting
         let numberPlane = new THREE.Mesh(geometry, numberMaterial);
         numberPlane.position.x += cfg.normal[0] * 0.1;
         numberPlane.position.y += cfg.normal[1] * 0.1;
         numberPlane.position.z += cfg.normal[2] * 0.1;
 
-        // 旋转对齐
+        // Align rotation
         let normal = new THREE.Vector3(...cfg.normal);
         let up = new THREE.Vector3(...cfg.vdir).negate();
         let quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
         sticker.quaternion.multiply(quaternion);
         numberPlane.quaternion.multiply(quaternion);
 
-        // 设置位置
+        // Set position
         sticker.position.set(px, py, pz);
         numberPlane.position.set(px, py, pz + 0.01);
 
@@ -526,7 +527,7 @@ function animate() {{
     print(f"已生成 {output_file} ，用浏览器打开即可。")
 
 
-# ===== 测试示例 =====
+# ===== Test example =====
 if __name__ == "__main__":
     initial_state = {
         "U": ["white"] * 9,
@@ -534,10 +535,10 @@ if __name__ == "__main__":
         "F": ["red"] * 9,
         "B": ["orange"] * 9,
         "L": ["blue"] * 9,
-        "R": ["green"] * 9
+        "R": ["green"] * 9,
     }
 
-    # 生成几个动作后的状态（这里只是演示，实际可根据魔方动作计算）
+    # Generate states after a few actions (demo only; in practice compute from actual cube moves)
     move1 = initial_state.copy()
     move1 = {f: c[:] for f, c in move1.items()}
     move1["F"][0] = "blue"

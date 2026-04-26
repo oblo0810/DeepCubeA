@@ -342,7 +342,7 @@ const moves = [{"U": ["white", "orange", "yellow", "red", "white", "red", "red",
 const orders = {"U": [0, 1, 2, 3, 4, 5, 6, 7, 8], "R": [9, 10, 11, 12, 13, 14, 15, 16, 17], "F": [18, 19, 20, 21, 22, 23, 24, 25, 26], "D": [27, 28, 29, 30, 31, 32, 33, 34, 35], "L": [36, 37, 38, 39, 40, 41, 42, 43, 44], "B": [45, 46, 47, 48, 49, 50, 51, 52, 53]};
 
 let scene, camera, renderer, controls;
-let stickers = {}; // 保存每个小贴片的Mesh
+let stickers = {}; // Store mesh for each sticker
 
 init();
 animate();
@@ -357,7 +357,7 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 轨道控制器
+    // Orbit controls
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
     controls.enableDamping = true;
@@ -366,20 +366,20 @@ function init() {
     controls.maxDistance = 20;
     controls.update();
 
-    // 灯光
+    // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
-    // 创建魔方
+    // Create cube
     createCube(initialState, orders);
 
-    // 窗口自适应
+    // Responsive resize
     window.addEventListener('resize', onWindowResize, false);
 
-    // 播放颜色变化
+    // Play color transitions
     playMoves(moves, 1600);
 }
 function makeNumberTexture(number, size = 128) {
@@ -388,19 +388,19 @@ function makeNumberTexture(number, size = 128) {
     canvas.height = size;
     const ctx = canvas.getContext('2d');
 
-    // 背景透明
+    // Transparent background
     ctx.clearRect(0, 0, size, size);
 
-    // 字体样式
+    // Font style
     ctx.fillStyle = 'black';
     ctx.font = `${size * 0.7}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // 画数字
+    // Draw number
     ctx.fillText(number.toString(), size / 2, size / 2);
 
-    // 创建纹理
+    // Create texture
     const texture = new THREE.CanvasTexture(canvas);
     texture.needsUpdate = true;
     return texture;
@@ -411,7 +411,7 @@ function createCube(state, orders) {
     const gap = 0.05;
     const offset = (stickerSize + gap);
 
-    // 每个面的方向和偏移
+    // Direction and offset for each face
     const faceConfig = {
         U: { normal: [0, 1, 0], base: [0, 1.5, 0], udir: [1, 0, 0], vdir: [0, 0, -1] },
         D: { normal: [0, -1, 0], base: [0, -1.5, 0], udir: [1, 0, 0], vdir: [0, 0, 1] },
@@ -435,33 +435,33 @@ function createCube(state, orders) {
         let py = cfg.base[1] + cfg.udir[1] * centerOffsetU + cfg.vdir[1] * centerOffsetV;
         let pz = cfg.base[2] + cfg.udir[2] * centerOffsetU + cfg.vdir[2] * centerOffsetV;
 
-        // 颜色贴图
+        // Color material
         let colorMaterial = new THREE.MeshLambertMaterial({ color: colors[i] });
 
-        // 数字贴图
+        // Number texture
         let numberTexture = makeNumberTexture(numbers[i]);
         let numberMaterial = new THREE.MeshBasicMaterial({ map: numberTexture, transparent: true });
 
-        // 创建面片（贴纸）
+        // Create sticker plane
         let geometry = new THREE.PlaneGeometry(stickerSize, stickerSize);
 
-        // 创建颜色面
+        // Create color plane
         let sticker = new THREE.Mesh(geometry, colorMaterial);
 
-        // 创建数字面，稍微抬高避免 z-fighting
+        // Create number plane, slightly raised to avoid z-fighting
         let numberPlane = new THREE.Mesh(geometry, numberMaterial);
         numberPlane.position.x += cfg.normal[0] * 0.1;
         numberPlane.position.y += cfg.normal[1] * 0.1;
         numberPlane.position.z += cfg.normal[2] * 0.1;
 
-        // 旋转对齐
+        // Align rotation
         let normal = new THREE.Vector3(...cfg.normal);
         let up = new THREE.Vector3(...cfg.vdir).negate();
         let quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
         sticker.quaternion.multiply(quaternion);
         numberPlane.quaternion.multiply(quaternion);
 
-        // 设置位置
+        // Set position
         sticker.position.set(px, py, pz);
         numberPlane.position.set(px, py, pz + 0.01);
 
